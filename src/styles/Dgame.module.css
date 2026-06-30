@@ -1,4 +1,4 @@
-﻿.shell {
+.shell {
   min-height: 100vh;
   padding: 24px;
   background: #f6f7f9;
@@ -300,6 +300,39 @@
   font-size: 13px;
 }
 
+.holdingList {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.holdingRow {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(80px, 0.55fr) minmax(90px, 0.7fr) minmax(110px, 0.85fr) minmax(110px, 0.8fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e7ebef;
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+
+.holdingRow span {
+  display: block;
+  margin-bottom: 4px;
+  color: #627081;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.holdingRow strong {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 @media (max-width: 900px) {
   .shell {
     padding: 16px;
@@ -321,7 +354,8 @@
 }
 
 @media (max-width: 720px) {
-  .eventRow {
+  .eventRow,
+  .holdingRow {
     grid-template-columns: 1fr;
   }
 }
@@ -337,6 +371,7 @@
     grid-template-columns: 1fr;
   }
 }
+
 
 
 

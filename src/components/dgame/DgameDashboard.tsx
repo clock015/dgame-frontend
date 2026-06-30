@@ -1,4 +1,4 @@
-﻿import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useMemo, useState } from 'react';
 import type { Hex } from 'viem';
 import { useAccount, useChainId } from 'wagmi';
@@ -12,6 +12,7 @@ import { GachaPanel } from './GachaPanel';
 import { GachaRequestsPanel } from './GachaRequestsPanel';
 import { MerchantPanel } from './MerchantPanel';
 import { PlayerPanel } from './PlayerPanel';
+import { PlayerCharacterIndexPanel } from './PlayerCharacterIndexPanel';
 import { TransactionStatus } from './TransactionStatus';
 
 type DgameDashboardProps = {
@@ -106,6 +107,10 @@ export function DgameDashboard({ initialDeployment }: DgameDashboardProps) {
           playerId={playerId}
           setCharacterId={setCharacterId}
         />
+        <PlayerCharacterIndexPanel
+          characterId={characterId}
+          playerId={playerId}
+        />
         <GachaPanel
           characterId={characterId}
           deployment={deployment}
@@ -138,3 +143,4 @@ export function DgameDashboard({ initialDeployment }: DgameDashboardProps) {
     </main>
   );
 }
+
