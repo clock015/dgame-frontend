@@ -1,0 +1,345 @@
+﻿.shell {
+  min-height: 100vh;
+  padding: 24px;
+  background: #f6f7f9;
+  color: #16181d;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1280px;
+  margin: 0 auto 16px;
+}
+
+.topbar h1 {
+  margin: 4px 0 0;
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.eyebrow {
+  color: #496275;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.walletArea {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #496275;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.section {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #dfe4ea;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(20, 27, 36, 0.04);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.sectionHeader span {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eef6f1;
+  color: #256442;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.addressGrid,
+.metricGrid,
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.field {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #e7ebef;
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+
+.field span,
+.inputGroup span,
+.transactionBar span {
+  display: block;
+  margin-bottom: 4px;
+  color: #627081;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.field strong,
+.transactionBar strong {
+  display: block;
+  min-height: 20px;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+
+.copyableAddress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.copyableAddress strong {
+  min-width: 0;
+}
+
+.copyableAddress button {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #cbd5df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #26313d;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.copyableAddress button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.inputGroup {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.inputGroup input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #cfd7df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #16181d;
+  font: inherit;
+}
+
+
+.metricGroup {
+  margin-top: 14px;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.groupHeader h3 {
+  margin: 0;
+  color: #26313d;
+  font-size: 14px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.groupHeader span {
+  color: #627081;
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+
+.nftActionRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.actionsTop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.button,
+.primaryButton {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #b8c3ce;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1f2933;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.primaryButton {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.button:disabled,
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.transactionBar {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+  max-width: 1280px;
+  margin: 0 auto 16px;
+  padding: 12px 14px;
+  border: 1px solid #d7dee7;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.transactionBar p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #b42318;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+
+.eventList {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.eventRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(90px, 0.7fr) minmax(70px, 0.55fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e7ebef;
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+
+.eventRow span {
+  display: block;
+  margin-bottom: 4px;
+  color: #627081;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.eventRow strong {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.warning {
+  margin: 12px 0 0;
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hint {
+  margin: 12px 0 0;
+  color: #627081;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    padding: 16px;
+  }
+
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .walletArea {
+    justify-content: space-between;
+  }
+
+  .grid,
+  .transactionBar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .eventRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .nftActionRow {
+    grid-template-columns: 1fr;
+  }
+
+  .addressGrid,
+  .metricGrid,
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+
+
+

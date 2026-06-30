@@ -14,6 +14,8 @@ import type {
   CharacterTokenInfo,
   GachaBatch,
   GachaRoll,
+  GachaRollStatus,
+  GachaRollSummary,
   PlayerBalance,
   PlayerPurchase,
 } from '../contracts/types';
@@ -23,9 +25,58 @@ type ReadOptions = {
   deployment?: DgameDeployment;
   enabled?: boolean;
 };
+type CharacterMetadataResult =
+  | [bigint, string]
+  | { attributes: bigint; characterCID: string };
 
+type CharacterTokenInfoResult =
+  | [bigint, number, bigint]
+  | { score: bigint; level: number; number: bigint };
+
+function toCharacterMetadata(value: unknown): CharacterMetadata {
+  if (Array.isArray(value)) {
+    const [attributes, characterCID] = value as [bigint, string];
+    return { attributes, characterCID };
+  }
+
+  const metadata = value as { attributes: bigint; characterCID: string };
+  return {
+    attributes: metadata.attributes,
+    characterCID: metadata.characterCID,
+  };
+}
+
+function toCharacterTokenInfo(value: unknown): CharacterTokenInfo {
+  if (Array.isArray(value)) {
+    const [score, level, number] = value as [bigint, number, bigint];
+    return { score, level, number };
+  }
+
+  const tokenInfo = value as { score: bigint; level: number; number: bigint };
+  return {
+    score: tokenInfo.score,
+    level: tokenInfo.level,
+    number: tokenInfo.number,
+  };
+}
+
+
+function toGachaRollStatus(status: number): GachaRollStatus {
+  if (status === 1) {
+    return 'requested';
+  }
+
+  if (status === 2) {
+    return 'resolved';
+  }
+
+  return 'unknown';
+}
 function shouldRead(enabled: boolean | undefined, values: unknown[]) {
-  return enabled !== false && values.every(Boolean);
+  return (
+    enabled !== false &&
+    values.every((value) => value !== undefined && value !== null && value !== '')
+  );
 }
 
 export function usePlayerInfo(playerId: bigint | undefined, options: ReadOptions = {}) {
@@ -163,19 +214,12 @@ export function useCharacterInfo(
 
         const metadata =
           characterResult?.status === 'success'
-            ? ({
-                attributes: (characterResult.result as [bigint, string])[0],
-                characterCID: (characterResult.result as [bigint, string])[1],
-              } satisfies CharacterMetadata)
+            ? toCharacterMetadata(characterResult.result)
             : undefined;
 
         const tokenInfo =
           tokenInfoResult?.status === 'success'
-            ? ({
-                score: (tokenInfoResult.result as [bigint, number, bigint])[0],
-                level: (tokenInfoResult.result as [bigint, number, bigint])[1],
-                number: (tokenInfoResult.result as [bigint, number, bigint])[2],
-              } satisfies CharacterTokenInfo)
+            ? toCharacterTokenInfo(tokenInfoResult.result)
             : undefined;
 
         const rewardBalance =
@@ -234,6 +278,55 @@ export function useGachaRoll(
   });
 }
 
+
+export function useGachaRollSummaries(
+  requestIds: bigint[],
+  options: ReadOptions = {},
+) {
+  const { deployment } = useDgameDeployment({ deployment: options.deployment });
+
+  return useReadContracts({
+    contracts: deployment.gachaPoolProxy
+      ? requestIds.map((requestId) => ({
+          address: deployment.gachaPoolProxy,
+          abi: gachaPoolAbi,
+          functionName: 'rolls',
+          args: [requestId],
+        }))
+      : [],
+    query: {
+      enabled: shouldRead(options.enabled, [deployment.gachaPoolProxy]) && requestIds.length > 0,
+      select: (values) => {
+        return values.reduce<Record<string, GachaRollSummary>>((acc, value, index) => {
+          const requestId = requestIds[index];
+
+          if (requestId === undefined || value.status !== 'success') {
+            return acc;
+          }
+
+          const [status, , , , , , batchId] = value.result as [
+            number,
+            number,
+            number,
+            bigint,
+            bigint,
+            bigint,
+            bigint,
+          ];
+
+          acc[requestId.toString()] = {
+            requestId,
+            status: toGachaRollStatus(status),
+            rawStatus: status,
+            batchId,
+          };
+
+          return acc;
+        }, {});
+      },
+    },
+  });
+}
 export function useGachaBatch(
   batchId: bigint | undefined,
   options: ReadOptions = {},
@@ -260,6 +353,24 @@ export function useGachaBatch(
   });
 }
 
+export function useGachaPoolFee(
+  rarity: number | undefined,
+  options: ReadOptions = {},
+) {
+  const { deployment } = useDgameDeployment({ deployment: options.deployment });
+
+  return useReadContract({
+    address: deployment.marketProxy,
+    abi: marketAbi,
+    functionName: 'getGachaPoolFee',
+    args: rarity === undefined ? undefined : [rarity],
+    query: {
+      enabled: shouldRead(options.enabled, [deployment.marketProxy, rarity]),
+      select: (value) => value as bigint,
+    },
+  });
+}
+
 export function useAssetBalance(options: ReadOptions = {}) {
   const { address } = useAccount();
   const { deployment } = useDgameDeployment({ deployment: options.deployment });
@@ -275,6 +386,23 @@ export function useAssetBalance(options: ReadOptions = {}) {
   });
 }
 
+export function useContractOwner(
+  contract: 'marketProxy' | 'merchantProxy',
+  options: ReadOptions = {},
+) {
+  const { deployment } = useDgameDeployment({ deployment: options.deployment });
+  const address = deployment[contract];
+  const abi = contract === 'merchantProxy' ? merchantAbi : marketAbi;
+
+  return useReadContract({
+    address,
+    abi,
+    functionName: 'owner',
+    query: {
+      enabled: shouldRead(options.enabled, [address]),
+    },
+  });
+}
 export function useMerchantSummary(options: ReadOptions = {}) {
   const { deployment } = useDgameDeployment({ deployment: options.deployment });
 
@@ -327,4 +455,15 @@ export function useMerchantSummary(options: ReadOptions = {}) {
     },
   });
 }
+
+
+
+
+
+
+
+
+
+
+
 

@@ -1,4 +1,4 @@
-import type { Address, Hex } from 'viem';
+﻿import type { Address, Hex } from 'viem';
 
 export type PlayerId = bigint;
 export type CharacterId = bigint;
@@ -43,6 +43,15 @@ export type GachaBatch = {
   committed: boolean;
 };
 
+export type GachaRollStatus = 'unknown' | 'requested' | 'resolved';
+
+export type GachaRollSummary = {
+  requestId: RequestId;
+  status: GachaRollStatus;
+  rawStatus: number;
+  batchId: bigint;
+};
+
 export type MockRechargeParams = {
   buyer: Address;
   playerId: PlayerId;
@@ -71,3 +80,6 @@ export type OwnerTradeOutParams = {
   amount: TokenAmount;
   data?: Hex;
 };
+
+
+

@@ -1,4 +1,4 @@
-import type { Address } from 'viem';
+﻿import type { Address } from 'viem';
 
 export type DgameDeployment = {
   asset?: Address;
@@ -22,7 +22,7 @@ export function asOptionalAddress(value: string | undefined): Address | undefine
   return value as Address;
 }
 
-function asOptionalBoolean(value: string | undefined): boolean | undefined {
+export function asOptionalBoolean(value: string | undefined): boolean | undefined {
   if (value === undefined) {
     return undefined;
   }
@@ -30,23 +30,43 @@ function asOptionalBoolean(value: string | undefined): boolean | undefined {
   return value === 'true';
 }
 
-export const envDeployment: DgameDeployment = {
-  asset: asOptionalAddress(process.env.NEXT_PUBLIC_DGAME_ASSET),
-  onMarket: asOptionalAddress(process.env.NEXT_PUBLIC_DGAME_ON_MARKET),
-  usingMockMarket: asOptionalBoolean(
-    process.env.NEXT_PUBLIC_DGAME_USING_MOCK_MARKET,
-  ),
-  characterProxy: asOptionalAddress(
-    process.env.NEXT_PUBLIC_DGAME_CHARACTER_PROXY,
-  ),
-  merchantProxy: asOptionalAddress(
-    process.env.NEXT_PUBLIC_DGAME_MERCHANT_PROXY,
-  ),
-  marketProxy: asOptionalAddress(process.env.NEXT_PUBLIC_DGAME_MARKET_PROXY),
-  gachaPoolProxy: asOptionalAddress(
-    process.env.NEXT_PUBLIC_DGAME_GACHA_POOL_PROXY,
-  ),
-};
+function firstDefined(...values: Array<string | undefined>) {
+  return values.find((value) => value !== undefined && value !== '');
+}
+
+export function deploymentFromEnv(env: NodeJS.ProcessEnv): DgameDeployment {
+  return {
+    asset: asOptionalAddress(
+      firstDefined(env.NEXT_PUBLIC_DGAME_ASSET, env.ASSET_ADDRESS),
+    ),
+    onMarket: asOptionalAddress(
+      firstDefined(env.NEXT_PUBLIC_DGAME_ON_MARKET, env.ONMARKET_ADDRESS),
+    ),
+    usingMockMarket: asOptionalBoolean(
+      firstDefined(
+        env.NEXT_PUBLIC_DGAME_USING_MOCK_MARKET,
+        env.ONMARKET_USING_MOCK,
+      ),
+    ),
+    characterProxy: asOptionalAddress(
+      firstDefined(env.NEXT_PUBLIC_DGAME_CHARACTER_PROXY, env.CHARACTER_PROXY),
+    ),
+    merchantProxy: asOptionalAddress(
+      firstDefined(
+        env.NEXT_PUBLIC_DGAME_MERCHANT_PROXY,
+        env.CHARACTER_MARKET_MERCHANT_PROXY,
+      ),
+    ),
+    marketProxy: asOptionalAddress(
+      firstDefined(env.NEXT_PUBLIC_DGAME_MARKET_PROXY, env.MARKET_PROXY),
+    ),
+    gachaPoolProxy: asOptionalAddress(
+      firstDefined(env.NEXT_PUBLIC_DGAME_GACHA_POOL_PROXY, env.GACHA_POOL_PROXY),
+    ),
+  };
+}
+
+export const envDeployment: DgameDeployment = deploymentFromEnv(process.env);
 
 export function mergeDeployments(
   override: DgameDeployment | undefined,
