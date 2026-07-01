@@ -4,6 +4,7 @@ export type PlayerCharacterHoldingDto = {
   purchaseCount: string;
   spent: string;
   characterCID?: string;
+  name?: string;
   level?: number;
   score?: string;
   rewardBalance?: string;
@@ -58,4 +59,17 @@ export async function syncPlayerCharacterHolding(
   });
 
   return readJsonResponse<SyncResponse>(response);
+}
+
+export async function refreshPlayerCharacterHoldings(playerId: string) {
+  const response = await fetch('/api/player-character-index', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ action: 'refreshPlayer', playerId }),
+  });
+  const data = await readJsonResponse<HoldingsResponse>(response);
+
+  return data.holdings;
 }

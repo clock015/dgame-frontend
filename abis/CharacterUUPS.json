@@ -129,6 +129,11 @@
             "name": "characterCID",
             "type": "string",
             "internalType": "string"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "internalType": "string"
           }
         ]
       }
@@ -350,6 +355,11 @@
       },
       {
         "name": "characterCID",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "name",
         "type": "string",
         "internalType": "string"
       }

@@ -7,6 +7,7 @@ import {
 } from 'wagmi';
 
 import {
+  characterAbi,
   erc20Abi,
   gachaPoolAbi,
   marketAbi,
@@ -17,6 +18,7 @@ import type { DgameDeployment } from '../contracts/addresses';
 import type {
   ClaimRewardViaMerchantParams,
   GachaRequestParams,
+  MintCharacterParams,
   MockRechargeParams,
   OwnerTradeOutParams,
 } from '../contracts/types';
@@ -83,6 +85,17 @@ export function useDgameTransactions(options: WriteOptions = {}) {
         ],
       }),
     [deployment.gachaPoolProxy, deployment.marketProxy, write],
+  );
+
+  const mintCharacter = useCallback(
+    (params: MintCharacterParams) =>
+      write.writeContract({
+        address: requireAddress(deployment.characterProxy, 'characterProxy'),
+        abi: characterAbi,
+        functionName: 'mint',
+        args: [params.attributes, params.characterCID, params.name],
+      }),
+    [deployment.characterProxy, write],
   );
 
   const commitGachaBatch = useCallback(
@@ -223,6 +236,7 @@ export function useDgameTransactions(options: WriteOptions = {}) {
     isConfirmed: receipt.isSuccess,
     approveAsset,
     mintPlayer,
+    mintCharacter,
     requestGacha,
     commitGachaBatch,
     resolveGachaRoll,

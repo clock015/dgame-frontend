@@ -331,7 +331,7 @@
       {
         "name": "playerId",
         "type": "uint256",
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256"
       }
     ],
@@ -350,7 +350,7 @@
       {
         "name": "playerId",
         "type": "uint256",
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256"
       }
     ],

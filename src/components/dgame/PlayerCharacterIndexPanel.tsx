@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
-
-import { usePlayerCharacterHoldings, useSyncPlayerCharacterHolding } from '../../hooks';
+import {
+  usePlayerCharacterHoldings,
+  useRefreshPlayerCharacterHoldings,
+  useSyncPlayerCharacterHolding,
+} from '../../hooks';
 import styles from '../../styles/Dgame.module.css';
 import { formatTokenAmount, parsePositiveBigInt } from '../../utils/format';
-import { ActionButton, Field, Section } from './Primitives';
+import { ActionButton, Section } from './Primitives';
 
 type PlayerCharacterIndexPanelProps = {
   characterId: string;
@@ -30,47 +32,22 @@ export function PlayerCharacterIndexPanel({
   characterId,
   playerId,
 }: PlayerCharacterIndexPanelProps) {
-  const parsedPlayerId = parsePositiveBigInt(playerId);
-  const parsedCharacterId = parsePositiveBigInt(characterId);
-  const normalizedPlayerId = parsedPlayerId?.toString();
-  const normalizedCharacterId = parsedCharacterId?.toString();
   const holdings = usePlayerCharacterHoldings(playerId);
-  const syncHolding = useSyncPlayerCharacterHolding();
-  const currentHolding = useMemo(() => {
-    if (!normalizedCharacterId) {
-      return undefined;
-    }
-
-    return holdings.data?.find(
-      (holding) => holding.characterId === normalizedCharacterId,
-    );
-  }, [holdings.data, normalizedCharacterId]);
-  const canSync = Boolean(normalizedPlayerId && normalizedCharacterId);
+  const refreshAll = useRefreshPlayerCharacterHoldings();
+  const refreshOne = useSyncPlayerCharacterHolding();
+  const normalizedPlayerId = parsePositiveBigInt(playerId)?.toString();
+  const isRefreshing = refreshAll.isPending || refreshOne.isPending;
 
   return (
     <Section meta="Indexer" title="Player Characters">
-      <div className={styles.metricGrid}>
-        <Field label="Indexed characters" value={holdings.data?.length ?? '-'} />
-        <Field
-          label="Current character indexed"
-          value={currentHolding ? 'Yes' : 'No'}
-        />
-      </div>
-
-      <div className={styles.actions}>
+      <div className={styles.actionsTop}>
         <ActionButton
-          disabled={!canSync || syncHolding.isPending}
+          disabled={!normalizedPlayerId || refreshAll.isPending || !holdings.data?.length}
           onClick={() =>
-            normalizedPlayerId && normalizedCharacterId
-              ? syncHolding.mutate({
-                  playerId: normalizedPlayerId,
-                  characterId: normalizedCharacterId,
-                })
-              : undefined
+            normalizedPlayerId ? refreshAll.mutate(normalizedPlayerId) : undefined
           }
-          variant="primary"
         >
-          Sync current character
+          Refresh all
         </ActionButton>
       </div>
 
@@ -79,8 +56,12 @@ export function PlayerCharacterIndexPanel({
           holdings.data.map((holding) => (
             <div className={styles.holdingRow} key={`${holding.playerId}-${holding.characterId}`}>
               <div>
-                <span>Character</span>
+                <span>ID</span>
                 <strong>#{holding.characterId}</strong>
+              </div>
+              <div>
+                <span>Level</span>
+                <strong>{holding.level ?? '-'}</strong>
               </div>
               <div>
                 <span>Bought</span>
@@ -90,16 +71,18 @@ export function PlayerCharacterIndexPanel({
                 <span>Spent</span>
                 <strong>{formatRawTokenAmount(holding.spent)}</strong>
               </div>
-              <div>
-                <span>Level / Score</span>
-                <strong>
-                  {holding.level ?? '-'} / {formatRawInteger(holding.score)}
-                </strong>
-              </div>
-              <div>
-                <span>Verified block</span>
-                <strong>{holding.verifiedBlockNumber}</strong>
-              </div>
+              <ActionButton
+                disabled={isRefreshing}
+                onClick={() =>
+                  refreshOne.mutate({
+                    playerId: holding.playerId,
+                    characterId: holding.characterId,
+                    transactionHash: holding.transactionHash,
+                  })
+                }
+              >
+                Refresh
+              </ActionButton>
             </div>
           ))
         ) : (
@@ -112,10 +95,8 @@ export function PlayerCharacterIndexPanel({
       </div>
 
       {holdings.error ? <p className={styles.warning}>{holdings.error.message}</p> : null}
-      {syncHolding.error ? <p className={styles.warning}>{syncHolding.error.message}</p> : null}
-      {syncHolding.data?.removed ? (
-        <p className={styles.hint}>The backend verified zero holding and removed this entry.</p>
-      ) : null}
+      {refreshAll.error ? <p className={styles.warning}>{refreshAll.error.message}</p> : null}
+      {refreshOne.error ? <p className={styles.warning}>{refreshOne.error.message}</p> : null}
     </Section>
   );
 }

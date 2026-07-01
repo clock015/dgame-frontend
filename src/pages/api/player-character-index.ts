@@ -27,6 +27,36 @@ function sendError(
   });
 }
 
+async function applyVerifiedHolding(
+  playerId: string,
+  characterId: string,
+  transactionHash?: string,
+) {
+  const result = await verifyPlayerCharacterHolding({
+    playerId,
+    characterId,
+    transactionHash,
+  });
+
+  if (result.holding) {
+    await upsertPlayerCharacterHolding(result.holding);
+  } else {
+    await removePlayerCharacterHolding(playerId, characterId);
+  }
+
+  return result;
+}
+
+async function refreshPlayerHoldings(playerId: string) {
+  const existingHoldings = await listPlayerCharacterHoldings(playerId);
+
+  for (const holding of existingHoldings) {
+    await applyVerifiedHolding(playerId, holding.characterId, holding.transactionHash);
+  }
+
+  return listPlayerCharacterHoldings(playerId);
+}
+
 export default async function handler(
   request: NextApiRequest,
   response: NextApiResponse<PlayerCharacterIndexResponse>,
@@ -40,14 +70,22 @@ export default async function handler(
     }
 
     if (request.method === 'POST') {
-      const input = parseSyncPlayerCharacterInput(request.body);
-      const result = await verifyPlayerCharacterHolding(input);
+      const action =
+        typeof request.body?.action === 'string' ? request.body.action : 'sync';
 
-      if (result.holding) {
-        await upsertPlayerCharacterHolding(result.holding);
-      } else {
-        await removePlayerCharacterHolding(input.playerId, input.characterId);
+      if (action === 'refreshPlayer') {
+        const playerId = parsePlayerIdQuery(request.body?.playerId);
+        const holdings = await refreshPlayerHoldings(playerId);
+        response.status(200).json({ holdings });
+        return;
       }
+
+      const input = parseSyncPlayerCharacterInput(request.body);
+      const result = await applyVerifiedHolding(
+        input.playerId,
+        input.characterId,
+        input.transactionHash,
+      );
 
       response.status(200).json(result);
       return;

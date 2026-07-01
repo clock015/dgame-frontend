@@ -1,4 +1,4 @@
-﻿import { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAccount, useReadContract, useReadContracts } from 'wagmi';
 
 import {
@@ -26,8 +26,8 @@ type ReadOptions = {
   enabled?: boolean;
 };
 type CharacterMetadataResult =
-  | [bigint, string]
-  | { attributes: bigint; characterCID: string };
+  | [bigint, string, string]
+  | { attributes: bigint; characterCID: string; name: string };
 
 type CharacterTokenInfoResult =
   | [bigint, number, bigint]
@@ -35,14 +35,15 @@ type CharacterTokenInfoResult =
 
 function toCharacterMetadata(value: unknown): CharacterMetadata {
   if (Array.isArray(value)) {
-    const [attributes, characterCID] = value as [bigint, string];
-    return { attributes, characterCID };
+    const [attributes, characterCID, name] = value as [bigint, string, string];
+    return { attributes, characterCID, name };
   }
 
-  const metadata = value as { attributes: bigint; characterCID: string };
+  const metadata = value as { attributes: bigint; characterCID: string; name: string };
   return {
     attributes: metadata.attributes,
     characterCID: metadata.characterCID,
+    name: metadata.name,
   };
 }
 
@@ -296,6 +297,7 @@ export function useGachaRollSummaries(
       : [],
     query: {
       enabled: shouldRead(options.enabled, [deployment.gachaPoolProxy]) && requestIds.length > 0,
+      refetchInterval: requestIds.length > 0 ? 2000 : false,
       select: (values) => {
         return values.reduce<Record<string, GachaRollSummary>>((acc, value, index) => {
           const requestId = requestIds[index];
@@ -304,7 +306,7 @@ export function useGachaRollSummaries(
             return acc;
           }
 
-          const [status, , , , , , batchId] = value.result as [
+          const [status, , , playerId, characterId, , batchId] = value.result as [
             number,
             number,
             number,
@@ -318,8 +320,50 @@ export function useGachaRollSummaries(
             requestId,
             status: toGachaRollStatus(status),
             rawStatus: status,
+            playerId,
+            characterId,
             batchId,
           };
+
+          return acc;
+        }, {});
+      },
+    },
+  });
+}
+export function useGachaBatchSummaries(
+  batchIds: bigint[],
+  options: ReadOptions = {},
+) {
+  const { deployment } = useDgameDeployment({ deployment: options.deployment });
+
+  return useReadContracts({
+    contracts: deployment.gachaPoolProxy
+      ? batchIds.map((batchId) => ({
+          address: deployment.gachaPoolProxy,
+          abi: gachaPoolAbi,
+          functionName: 'batches',
+          args: [batchId],
+        }))
+      : [],
+    query: {
+      enabled: shouldRead(options.enabled, [deployment.gachaPoolProxy]) && batchIds.length > 0,
+      refetchInterval: batchIds.length > 0 ? 2000 : false,
+      select: (values) => {
+        return values.reduce<Record<string, GachaBatch>>((acc, value, index) => {
+          const batchId = batchIds[index];
+
+          if (batchId === undefined || value.status !== 'success') {
+            return acc;
+          }
+
+          const [lastRequestBlock, randao, committed] = value.result as [
+            bigint,
+            bigint,
+            boolean,
+          ];
+
+          acc[batchId.toString()] = { lastRequestBlock, randao, committed };
 
           return acc;
         }, {});
@@ -387,12 +431,12 @@ export function useAssetBalance(options: ReadOptions = {}) {
 }
 
 export function useContractOwner(
-  contract: 'marketProxy' | 'merchantProxy',
+  contract: 'characterProxy' | 'marketProxy' | 'merchantProxy',
   options: ReadOptions = {},
 ) {
   const { deployment } = useDgameDeployment({ deployment: options.deployment });
   const address = deployment[contract];
-  const abi = contract === 'merchantProxy' ? merchantAbi : marketAbi;
+  const abi = contract === 'characterProxy' ? characterAbi : contract === 'merchantProxy' ? merchantAbi : marketAbi;
 
   return useReadContract({
     address,
@@ -455,15 +499,3 @@ export function useMerchantSummary(options: ReadOptions = {}) {
     },
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-

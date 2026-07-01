@@ -1,4 +1,4 @@
-﻿import type { Address, Hex } from 'viem';
+import type { Address, Hex } from 'viem';
 
 export type PlayerId = bigint;
 export type CharacterId = bigint;
@@ -19,6 +19,7 @@ export type PlayerPurchase = {
 export type CharacterMetadata = {
   attributes: bigint;
   characterCID: string;
+  name: string;
 };
 
 export type CharacterTokenInfo = {
@@ -49,6 +50,8 @@ export type GachaRollSummary = {
   requestId: RequestId;
   status: GachaRollStatus;
   rawStatus: number;
+  playerId: bigint;
+  characterId: bigint;
   batchId: bigint;
 };
 
@@ -66,6 +69,12 @@ export type GachaRequestParams = {
   rarity: number;
 };
 
+
+export type MintCharacterParams = {
+  attributes: bigint;
+  characterCID: string;
+  name: string;
+};
 export type ClaimRewardViaMerchantParams = {
   characterId: CharacterId;
   settlementMerchant: Address;
@@ -80,6 +89,3 @@ export type OwnerTradeOutParams = {
   amount: TokenAmount;
   data?: Hex;
 };
-
-
-

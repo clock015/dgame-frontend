@@ -1,7 +1,13 @@
-﻿import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import type { DgameDeployment } from '../../contracts/addresses';
-import { useGachaRollSummaries, usePlayerGachaRequests } from '../../hooks';
+import {
+  useAutoSyncPlayerCharacterHoldings,
+  useGachaBatchSummaries,
+  useGachaRollSummaries,
+  usePlayerGachaRequests,
+  usePlayerGachaResolvedEvents,
+} from '../../hooks';
 import styles from '../../styles/Dgame.module.css';
 import { formatAddress, parsePositiveBigInt } from '../../utils/format';
 import { ActionButton, Field, Section, TextInput } from './Primitives';
@@ -11,15 +17,20 @@ type GachaRequestsPanelProps = {
   isBusy: boolean;
   onResolveRoll: (requestId: bigint) => void;
   playerId: string;
+  refreshKey?: string;
 };
 
-function formatRollStatus(status: string | undefined, rawStatus: number | undefined) {
+function formatRollStatus(
+  status: string | undefined,
+  rawStatus: number | undefined,
+  batchCommitted: boolean | undefined,
+) {
   if (!status) {
     return 'Loading';
   }
 
   if (status === 'requested') {
-    return 'Pending';
+    return batchCommitted ? 'Committed' : 'Pending';
   }
 
   if (status === 'resolved') {
@@ -29,11 +40,16 @@ function formatRollStatus(status: string | undefined, rawStatus: number | undefi
   return rawStatus === undefined ? 'Unknown' : `Unknown (${rawStatus})`;
 }
 
+function uniqueBigInts(values: bigint[]) {
+  return [...new Map(values.map((value) => [value.toString(), value])).values()];
+}
+
 export function GachaRequestsPanel({
   deployment,
   isBusy,
   onResolveRoll,
   playerId,
+  refreshKey,
 }: GachaRequestsPanelProps) {
   const [blockLookbackInput, setBlockLookbackInput] = useState('500');
   const parsedPlayerId = parsePositiveBigInt(playerId);
@@ -43,11 +59,70 @@ export function GachaRequestsPanel({
     deployment,
     playerId: parsedPlayerId,
   });
+  const resolvedEvents = usePlayerGachaResolvedEvents({
+    blockLookback: parsedBlockLookback,
+    deployment,
+    playerId: parsedPlayerId,
+  });
   const requestIds = useMemo(
-    () => requests.data?.map((request) => request.requestId) ?? [],
-    [requests.data],
+    () =>
+      uniqueBigInts([
+        ...(requests.data?.map((request) => request.requestId) ?? []),
+        ...(resolvedEvents.data?.map((event) => event.requestId) ?? []),
+      ]),
+    [requests.data, resolvedEvents.data],
   );
   const rollSummaries = useGachaRollSummaries(requestIds, { deployment });
+  const batchIds = useMemo(
+    () =>
+      uniqueBigInts(
+        Object.values(rollSummaries.data ?? {}).map((roll) => roll.batchId),
+      ),
+    [rollSummaries.data],
+  );
+  const batchSummaries = useGachaBatchSummaries(batchIds, { deployment });
+  const resolvedSyncHints = useMemo(
+    () =>
+      resolvedEvents.data?.flatMap((event) => {
+        const roll = rollSummaries.data?.[event.requestId.toString()];
+
+        if (!roll || roll.status !== 'resolved') {
+          return [];
+        }
+
+        return [
+          {
+            sourceId: `gacha-resolved:${event.requestId.toString()}`,
+            playerId: roll.playerId.toString(),
+            characterId: roll.characterId.toString(),
+            transactionHash: event.transactionHash,
+          },
+        ];
+      }) ?? [],
+    [resolvedEvents.data, rollSummaries.data],
+  );
+  const autoSync = useAutoSyncPlayerCharacterHoldings(resolvedSyncHints);
+  const refetchRequests = requests.refetch;
+  const refetchResolvedEvents = resolvedEvents.refetch;
+  const refetchRollSummaries = rollSummaries.refetch;
+  const refetchBatchSummaries = batchSummaries.refetch;
+
+  useEffect(() => {
+    if (!refreshKey) {
+      return;
+    }
+
+    refetchRequests();
+    refetchResolvedEvents();
+    refetchRollSummaries();
+    refetchBatchSummaries();
+  }, [
+    refreshKey,
+    refetchRequests,
+    refetchResolvedEvents,
+    refetchRollSummaries,
+    refetchBatchSummaries,
+  ]);
 
   return (
     <Section meta="Event history" title="Gacha Requests">
@@ -69,6 +144,7 @@ export function GachaRequestsPanel({
         {requests.data?.length ? (
           requests.data.map((request) => {
             const roll = rollSummaries.data?.[request.requestId.toString()];
+            const batch = roll ? batchSummaries.data?.[roll.batchId.toString()] : undefined;
             const isResolved = roll?.status === 'resolved';
 
             return (
@@ -79,7 +155,7 @@ export function GachaRequestsPanel({
                 </div>
                 <div>
                   <span>Status</span>
-                  <strong>{formatRollStatus(roll?.status, roll?.rawStatus)}</strong>
+                  <strong>{formatRollStatus(roll?.status, roll?.rawStatus, batch?.committed)}</strong>
                 </div>
                 <div>
                   <span>Block</span>
@@ -103,7 +179,10 @@ export function GachaRequestsPanel({
       </div>
 
       {requests.error ? <p className={styles.warning}>{requests.error.message}</p> : null}
+      {resolvedEvents.error ? <p className={styles.warning}>{resolvedEvents.error.message}</p> : null}
       {rollSummaries.error ? <p className={styles.warning}>{rollSummaries.error.message}</p> : null}
+      {batchSummaries.error ? <p className={styles.warning}>{batchSummaries.error.message}</p> : null}
+      {autoSync.error ? <p className={styles.warning}>{autoSync.error.message}</p> : null}
     </Section>
   );
 }

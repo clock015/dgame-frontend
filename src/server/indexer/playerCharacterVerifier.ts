@@ -64,14 +64,15 @@ function toPlayerPurchase(value: unknown): PlayerPurchase {
 
 function toCharacterMetadata(value: unknown): CharacterMetadata {
   if (Array.isArray(value)) {
-    const [attributes, characterCID] = value as [bigint, string];
-    return { attributes, characterCID };
+    const [attributes, characterCID, name] = value as [bigint, string, string];
+    return { attributes, characterCID, name };
   }
 
-  const metadata = value as { attributes: bigint; characterCID: string };
+  const metadata = value as { attributes: bigint; characterCID: string; name: string };
   return {
     attributes: metadata.attributes,
     characterCID: metadata.characterCID,
+    name: metadata.name,
   };
 }
 
@@ -163,6 +164,7 @@ export async function verifyPlayerCharacterHolding(
     purchaseCount: purchase.purchaseCount.toString(),
     spent: purchase.spent.toString(),
     characterCID: metadata.characterCID,
+    name: metadata.name,
     level: tokenInfo.level,
     score: tokenInfo.score.toString(),
     rewardBalance: (rewardBalanceValue as bigint).toString(),

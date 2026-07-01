@@ -4,6 +4,7 @@ export type PlayerCharacterHolding = {
   purchaseCount: string;
   spent: string;
   characterCID?: string;
+  name?: string;
   level?: number;
   score?: string;
   rewardBalance?: string;
